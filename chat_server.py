@@ -32,26 +32,34 @@ while True:
             if data:
                 #connection.sendall(data)
                 if len(data) < BUFFER:#this could be buggy, if the size happens to equal to buffer size
-                    json_data = json.loads(dataStr)
+                    
+                    try:
+                        json_data = json.loads(dataStr)
 
-                    aRoom = json_data["room"]
-                    aPos = json_data["pos"]
-                    aRotX = json_data["rot"][0]
-                    aRotY = json_data["rot"][1]
-                    aRotZ = json_data["rot"][2]
+                        aRoom = json_data["room"]
+                        aPos = json_data["pos"]
+                        aRotX = json_data["rot"][0]
+                        aRotY = json_data["rot"][1]
+                        aRotZ = json_data["rot"][2]
 
-                    if aRoom >= 0 and aRoom < h and aPos >= 0 and aPos < w:
-                        # Update value
-                        mat_rot[aRoom][aPos][0] = aRotX
-                        mat_rot[aRoom][aPos][1] = aRotY
-                        mat_rot[aRoom][aPos][2] = aRotZ
+                        if aRoom >= 0 and aRoom < h and aPos >= 0 and aPos < w:
+                            # Update value
+                            mat_rot[aRoom][aPos][0] = aRotX
+                            mat_rot[aRoom][aPos][1] = aRotY
+                            mat_rot[aRoom][aPos][2] = aRotZ
 
-                        info = str(mat_rot[aRoom])
-                        connection.sendall(info)
-                    else:
-                        connection.sendall('Invalid data')
-                    dataStr = ""
+                            info = str(mat_rot[aRoom])
+                            connection.sendall(info)
+                    
+                        else:
+                            connection.sendall('Invalid data')
+                            dataStr = ""
+                    except ValueError:
+                        print 'malformatted data'
+                        dataStr = ""
+                        break; 
             else:
+                dataStr = ""
                 break
     finally:
         connection.close()
