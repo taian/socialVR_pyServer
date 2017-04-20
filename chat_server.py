@@ -22,44 +22,49 @@ dataStr = ""
 while True:
     print >>sys.stderr, 'waiting for a connection'
     connection, client_address = sock.accept()
+    connection.settimeout(2)
     try:
         print >>sys.stderr, 'client connected:', client_address
         while True:
-            data = connection.recv(BUFFER)
-            dataStr += data
-            
-            print >>sys.stderr, 'received "%s"' % data
-            if data:
-                #connection.sendall(data)
-                if len(data) < BUFFER:#this could be buggy, if the size happens to equal to buffer size
-                    
-                    try:
-                        json_data = json.loads(dataStr)
+            try:
+                data = connection.recv(BUFFER)
+                dataStr += data
+                
+                print >>sys.stderr, 'received "%s"' % data
+                if data:
+                    #connection.sendall(data)
+                    if len(data) < BUFFER:#this could be buggy, if the size happens to equal to buffer size
+                        
+                        try:
+                            json_data = json.loads(dataStr)
 
-                        aRoom = json_data["room"]
-                        aPos = json_data["pos"]
-                        aRotX = json_data["rot"][0]
-                        aRotY = json_data["rot"][1]
-                        aRotZ = json_data["rot"][2]
+                            aRoom = json_data["room"]
+                            aPos = json_data["pos"]
+                            aRotX = json_data["rot"][0]
+                            aRotY = json_data["rot"][1]
+                            aRotZ = json_data["rot"][2]
 
-                        if aRoom >= 0 and aRoom < h and aPos >= 0 and aPos < w:
-                            # Update value
-                            mat_rot[aRoom][aPos][0] = aRotX
-                            mat_rot[aRoom][aPos][1] = aRotY
-                            mat_rot[aRoom][aPos][2] = aRotZ
+                            if aRoom >= 0 and aRoom < h and aPos >= 0 and aPos < w:
+                                # Update value
+                                mat_rot[aRoom][aPos][0] = aRotX
+                                mat_rot[aRoom][aPos][1] = aRotY
+                                mat_rot[aRoom][aPos][2] = aRotZ
 
-                            info = str(mat_rot[aRoom])
-                            connection.sendall(info)
-                    
-                        else:
-                            connection.sendall('Invalid data')
+                                rot = str(mat_rot[aRoom])
+                                info = '{"rot":' + rot + '}'
+                                connection.sendall(info)
+                                dataStr = ""
+                            else:
+                                connection.sendall('Invalid data')
+                                dataStr = ""
+                        except ValueError:
+                            print 'malformatted data',dataStr
                             dataStr = ""
-                    except ValueError:
-                        print 'malformatted data'
-                        dataStr = ""
-                        break; 
-            else:
-                dataStr = ""
-                break
+                            break; 
+                else:
+                    dataStr = ""
+                    break
+            except socket.timeout:
+                break;
     finally:
         connection.close()
